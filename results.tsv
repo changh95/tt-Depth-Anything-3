@@ -1,0 +1,31 @@
+commit	gen_speed	accuracy	status	description
+ffc8e89a12	0.6661	100.0	keep	initial port: torch CPU reference for DA3 metric (DinoV2-L + DPT), pytest harness emits inference_speed/accuracy/peak_dram
+c3715b8c5c	2.5239	99.9511	keep	cast timed model to bfloat16 (3.79x speedup over fp32, 0.05% accuracy drop)
+-	2.1787	99.9717	discard	torch.compile reduce-overhead — JIT overhead exceeds gain on n=3 runs (-14%)
+-	1.6114	99.9479	discard	F.scaled_dot_product_attention — CPU SDPA backend slower than manual attention here (-36%)
+-	1.4079	99.9413	discard	batch=4 — single matmul already saturates CPU; batching adds memory pressure (-44%)
+-	2.2793	99.9541	discard	layerscale fold — within 3-run noise of bf16 baseline (~-9%)
+-	1.7960	99.9511	discard	set 64 CPU threads — hyperthreads contend, throughput drops ~29%
+-	2.4045	99.9511	discard	attn scale fold into qkv weight — within bf16 noise, no measurable gain
+-	1.8296	99.9541	discard	combined layerscale+attention scale fold — median 1.83 fps vs baseline median 2.41, noise floor exceeds gain
+351e978e15	2.5118	99.3167	keep	chip-side DinoV2-L backbone (HiFi4+fp32 acc, masked attention) — speed parity vs bf16 CPU; foundation for on-chip optimization
+-	2.1814	99.3369	discard	MLP fc1/fc2 HiFi2 — slower than HiFi4 (-13%); kernel-config switch overhead may dominate
+-	2.1814	99.3369	discard	MLP fc1/fc2 HiFi2 — slower than HiFi4 (-13%); kernel-config switch overhead dominates
+badaf237dc	2.4367	99.3167	keep	cache HiFi4 kernel config as module constant — within noise; cleanup (was 168 ctor calls per forward)
+0bb3525872	3.0082	99.2988	keep	cast CPU DPT head to bf16 — head was 70% of time; +20% to 3.01 fps over chip-backbone-only
+92b671a452	4.1790	99.0153	keep	core_grid 8x12 on MLP fc1/fc2 only — +39% to 4.18 fps; pinning qkv/proj also drops PCC <99%
+-	3.8050	99.0367	discard	head channels_last — input layout conversion per call exceeds NHWC kernel gain (-9%)
+-	3.8050	99.0367	discard	head channels_last — input layout conversion per call exceeds NHWC kernel gain (-9%)
+-	3.9807	99.0597	discard	drop HiFi4 on attn bmms — slower (-5%); LoFi attention dispatch path slower than HiFi4 here
+-	3.5432	99.0164	discard	run 4 DPT projects on chip — extra ttnn ops + downloads exceed CPU time saved (-15%)
+31b90f4335	3.7714	99.0367	keep	head in channels_last with explicit input contiguous() — refinenets hit AVX512 NHWC bf16 kernels; iter17 median 3.77 vs iter13 median 3.62 (+4%)
+feee0a1b3e	3.8148	99.0367	keep	drop explicit channels_last contiguous() — auto-handled by NHWC conv2d when weight is channels_last; one less copy per call
+-	3.7189	99.0367	discard	cap CPU threads at 16 — median 3.72 vs iter18 median 3.81 (-2%); 32 threads remained better
+10cb06e5ff	4.1902	99.0367	keep	defer intermediate downloads to end of backbone — chip pipelines all 24 blocks; median 4.19 vs iter18 median 3.81 (+10%)
+-	3.6795	98.9082	discard	drop fp32_dest_acc_en — accuracy drops to 98.91% (<99%) and speed median 3.68 (worse)
+-	4.0784	98.9211	discard	core_grid 8x12 on qkv linear — accuracy drops to 98.92% (<99%); reduction order shift hits a different precision boundary than MLP
+-	1.9521	99.9511	discard	jit.trace head — fails on grad-requiring params; harness falls back to torch reference
+2c417ac756	5.2339	99.1545	keep	cpu backbone -> bfloat16 — saves implicit fp32 cast and speeds patch_embed; median 5.23 vs iter20 median 4.19 (+25%, 7.9x baseline)
+-	4.5566	99.1714	discard	projects on chip + deferred sync — 4 extra linears outweigh CPU savings (-13% vs iter24)
+-	4.3957	99.1545	discard	concat 4 intermediates then single to_torch — concat op cost exceeds 3-syncs-saved (-16% vs iter24)
+-	3.5123	99.1545	discard	trace-capture backbone — correct but slower (-33% vs iter24); chip compute dominates dispatch overhead, execute_trace blocking wait negates async-queue wins
