@@ -111,9 +111,10 @@ per frame in steady state = **~9 fps**.
 - Add a `reference_depth.pt` fixture saved from iter 0 (clean fp32) and pin
   PCC against that. Then output-altering optimizations (Tier 2.3, layer fusion)
   become measurable.
-- Caveat: PROGRAM.md forbids "modify the metrics or benchmark harness itself".
-  Adding a frozen fixture may or may not count — likely OK since the metric
-  formula stays the same, only the comparison reference is hardened.
+- Caveat: original task constraint forbade "modifying the metrics or benchmark
+  harness itself". Adding a frozen fixture may or may not count — likely OK
+  since the metric formula stays the same, only the comparison reference is
+  hardened.
 
 ### 3.2 Multi-run median / noise filtering in harness
 - Single-shot variance is ±10–15% (e.g., iter 17 first run 4.24, median 3.77).
@@ -129,9 +130,9 @@ per frame in steady state = **~9 fps**.
 
 ### 3.4 Higher-resolution timing per stage
 - Current profile is wall-clock `time.perf_counter()` around blocks of ops.
-- Use `tracy` profiler (already enabled per PROGRAM.md §6) to get per-op
-  cycle counts. Will show whether dispatch or compute dominates the chip
-  side, validating Tier 2.2 effort.
+- Use the `tracy` profiler (built into the tt-metal you're linking against)
+  to get per-op cycle counts. Will show whether dispatch or compute dominates
+  the chip side, validating Tier 2.2 effort.
 
 ---
 

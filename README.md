@@ -13,11 +13,22 @@ ByteDance model bit-for-bit.
 | KITTI Eigen δ<1.25 | 95.91% | 95.88% |
 | Pearson PCC vs canonical DA3-Metric | 1.000000 | 0.999641 |
 
+## Sample outputs
+
+Three KITTI Eigen test images run end-to-end through the chip pipeline. Depth
+shown with a `turbo` colormap on the log-clipped 1–50 m range — bright = near,
+dark = far.
+
+| Source | Predicted depth |
+|--------|------------------|
+| ![source 1](media/source_1.png) | ![result 1](media/result_1.png) |
+| ![source 2](media/source_2.png) | ![result 2](media/result_2.png) |
+| ![source 3](media/source_3.png) | ![result 3](media/result_3.png) |
+
 ## Layout
 
 ```
 tt_depth_anything_3/
-├── PROGRAM.md          # original task spec (autoresearch goal & rules)
 ├── TODO.md             # outstanding work + anti-patterns log
 ├── results.tsv         # iteration history (kept/discard, fps, accuracy)
 └── models/experimental/depth_anything_v3/
